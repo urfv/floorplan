@@ -60,6 +60,7 @@ test('the generated Kimi agent is read-only and cannot delegate', () => {
   assert.match(agent, /^subagents: \[\]$/m);
   const serve = fs.readFileSync(path.join(root, 'floorplan', 'serve.mjs'), 'utf8');
   assert.doesNotMatch(serve, /new Function|\beval\s*\(|waitlist|Floorplan Cloud/i);
+  assert.doesNotMatch(serve, /ComSpec|cmd\.exe|powershell/i, 'prompts must never pass through a command shell');
 });
 
 test('Kimi JSONL becomes progress and a structured SSE answer with a session', async () => {
