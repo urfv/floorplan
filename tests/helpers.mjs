@@ -30,9 +30,9 @@ export function run(script, root, ...args) {
   return execFileSync(process.execPath, [path.join(SKILL, 'scripts', script), root, ...args], { encoding: 'utf8', stdio: 'pipe' });
 }
 
-/** scan + build, the way the skill does a first map (without touching CLAUDE.local.md). */
+/** scan + build, the way the skill does a first map. */
 export function scanAndBuild(root) {
-  return run('scan.mjs', root) + run('build.mjs', root, '--no-claude-md');
+  return run('scan.mjs', root) + run('build.mjs', root);
 }
 
 export const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));

@@ -20,7 +20,7 @@ function buildFixture(name) {
     project: { name, summary: 'Test fixture.' },
     nodes: [{ id: 'api', label: 'Server', kind: 'service', summary: 'The sample server.', paths: ['**'] }],
   }));
-  for (const s of ['scan.mjs', 'build.mjs']) execFileSync(process.execPath, [path.join(scripts, s), root, '--no-claude-md'], { stdio: 'pipe' });
+  for (const s of ['scan.mjs', 'build.mjs']) execFileSync(process.execPath, [path.join(scripts, s), root], { stdio: 'pipe' });
   const graph = JSON.parse(fs.readFileSync(path.join(root, 'floorplan', 'graph.json'), 'utf8'));
   fs.rmSync(root, { recursive: true, force: true });
   return graph;

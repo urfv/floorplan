@@ -43,7 +43,7 @@
     ['CDN', 'A network of servers around the world that delivers images and files quickly from somewhere near the visitor.', 'CDN', 'CDNs'],
     ['Storage bucket', 'Cloud file storage for things like product images, uploads and exports.', 'storage bucket', 'bucket', 'buckets', 'S3', 'GCS', 'Cloud Storage'],
     ['Pub/Sub', 'Google\'s message service: one part of the app posts an event and others pick it up to handle in the background.', 'Pub/Sub', 'PubSub'],
-    ['MCP', 'A standard way to connect AI assistants (like Claude or ChatGPT) to an app so they can look things up in it.', 'MCP', 'MCP server', 'Model Context Protocol'],
+    ['MCP', 'A standard way to connect AI assistants (like Kimi or ChatGPT) to an app so they can look things up in it.', 'MCP', 'MCP server', 'Model Context Protocol'],
     ['Next.js', 'A popular toolkit for building websites and web apps with React.', 'Next.js', 'NextJS'],
     ['React', 'A popular library for building interactive screens out of reusable pieces.', '=React'],
     ['Flask', 'A Python toolkit for building web servers.', 'Flask'],

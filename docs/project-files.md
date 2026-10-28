@@ -1,53 +1,34 @@
 # What's in your project
 
-Floorplan writes to exactly two places in your project: the `floorplan/` folder, and a short section in `CLAUDE.local.md`. Neither is committed to git, and nothing else in your project is touched.
+Floorplan writes only inside the `floorplan/` folder. It does not create or modify `AGENTS.md`, `.kimi-code/`, Claude files, `.gitignore` or `.git/info/exclude`.
 
 ## The `floorplan/` folder
 
 | File | What it is | Edit it? |
 |---|---|---|
-| `index.html` | The map: one self-contained page | No. Rebuilt every time |
-| `graph.json` | Everything the map shows, as data | No. Rebuilt every time |
-| `architecture.json` | The parts of your app, outside services, extra connections, flows and the tour | **Yes** |
-| `descriptions/*.json` | The name and description of every file and endpoint, one file per part | **Yes** |
-| `recent-work.json` | What was just worked on, and why. Replaced on every update | Rarely. Claude writes it |
+| `index.html` | The map: one self-contained offline page | No. Rebuilt every time |
+| `graph.json` | Everything the map shows, as data | No |
+| `graph-query.mjs` | Shared map lookups and response schemas | No |
+| `architecture.json` | Parts, outside services, extra connections, flows and tour | **Yes** |
+| `descriptions/*.json` | Names and descriptions for files and endpoints | **Yes** |
+| `recent-work.json` | What was just worked on, and why | Rarely. Kimi writes it |
 | `custom-flows.json` | Flows requested from the map | Only to delete one |
-| `serve.mjs` | Serves the map locally and answers questions through the Claude Code CLI | No |
-| `query.mjs` | Looks things up in the map from the command line; Claude uses it too | No |
-| `artifact.html` | A copy for opening in the Claude app, only if you asked for one | No |
-| `.cache/` | The scan, Claude's worksheets, the last update's changes, and the running server's address | No. Safe to delete |
+| `serve.mjs` | Serves the map and answers through Kimi Code | No |
+| `query.mjs` | Command-line map lookups | No |
+| `.cache/` | Scans, worksheets, read-only agent context and server state | No. Safe to delete |
 | `.gitignore` | Keeps this whole folder out of git | No |
 
 ### Editing names and structure
 
-Your edits to `architecture.json` and `descriptions/` are kept on every update. You can:
-- rename a part, or reword a description;
-- move files between parts by changing the `paths` patterns;
-- add a connection the scan missed;
-- pin a note to a file;
-- add or change flows and the tour.
+Your edits to `architecture.json` and `descriptions/` are kept on every update. You can rename parts, reword descriptions, move files between `paths` patterns, add missed connections, pin file notes, or edit flows and the tour. You can also ask Kimi to do it.
 
-Or just ask Claude ("rename 'Main server' to 'Shop API' on the floorplan").
-
-The full format is in [`skills/floorplan/references/schema.md`](../skills/floorplan/references/schema.md), and the style guide for names and descriptions is in [`writing-descriptions.md`](../skills/floorplan/references/writing-descriptions.md).
-
-## `CLAUDE.local.md`
-
-Floorplan adds a short marked section here, telling future Claude Code sessions in your project that the map exists and how to look things up in it. `CLAUDE.local.md` is Claude Code's file for personal project notes, loaded at the start of every session like `CLAUDE.md`. Floorplan:
-- creates the file if you don't have one;
-- only ever rewrites its own section, between `<!-- floorplan:start -->` and `<!-- floorplan:end -->`;
-- adds the file to your clone's private ignore list, `.git/info/exclude`.
-
-To turn it off, put `<!-- floorplan:off -->` anywhere in `CLAUDE.local.md`.
+The formats are in [`skills/floorplan/references/schema.md`](../skills/floorplan/references/schema.md), with naming guidance in [`writing-descriptions.md`](../skills/floorplan/references/writing-descriptions.md).
 
 ## Staying out of git
 
-- **`floorplan/`** contains its own `.gitignore` that ignores everything in the folder, including itself. Your `.gitignore` isn't changed, and the folder never appears in `git status`.
-- **`CLAUDE.local.md`** is listed in `.git/info/exclude`, the per-clone ignore list that is never committed. If your project already ignores it, nothing is added.
+`floorplan/` contains its own `.gitignore` that ignores everything in the folder, including itself. Your project's ignore files and local git exclude are not changed. The map is personal to each clone; teammates who install Floorplan make their own.
 
-The map is personal to each clone. Teammates who install Floorplan make their own.
-
-If you committed a `floorplan/` folder before, ignoring it doesn't untrack those files. The build tells you the command that does, which keeps the files on disk:
+If you committed a `floorplan/` folder before, ignoring it doesn't untrack those files. The build prints the command to untrack them while keeping them on disk:
 
 ```bash
 git rm -r --cached floorplan

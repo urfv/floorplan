@@ -53,6 +53,12 @@ test('nothing Floorplan makes is committed: floorplan/ ignores itself', () => {
   assert.equal(fs.readFileSync(path.join(root, 'floorplan', '.gitignore'), 'utf8').trim().split('\n').pop(), '*');
 });
 
+test('a build does not create or modify agent instruction files', () => {
+  for (const name of ['AGENTS.md', 'CLAUDE.md', 'CLAUDE.local.md']) assert.equal(fs.existsSync(path.join(root, name)), false, name);
+  assert.equal(fs.existsSync(path.join(root, '.kimi-code', 'AGENTS.md')), false);
+  assert.doesNotMatch(output, /CLAUDE\.LOCAL\.MD/);
+});
+
 test('query.mjs finds things on the map by plain words', () => {
   const found = JSON.parse(execFileSync(process.execPath, [path.join(root, 'floorplan', 'query.mjs'), 'find', 'refund'], { encoding: 'utf8' }));
   const ids = JSON.stringify(found);

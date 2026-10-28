@@ -6,8 +6,8 @@ Please report security problems privately through GitHub: open the repository's 
 
 Helpful details:
 - what the problem is, and what someone could do with it;
-- the steps to reproduce it;
-- which version of Floorplan you're on (see `.claude-plugin/plugin.json`).
+- steps to reproduce it;
+- your Floorplan version (see `kimi.plugin.json`).
 
 You'll get a reply within a few days. Once a fix is out, you'll be credited unless you'd rather not be.
 
@@ -16,9 +16,10 @@ You'll get a reply within a few days. Once a fix is out, you'll be credited unle
 In scope:
 - the map's local server (`serve.mjs`);
 - anything that could leak secrets or source code;
-- anything that writes outside the project's `floorplan/` folder and `CLAUDE.local.md`.
+- writes outside the project's `floorplan/` folder;
+- the read-only Kimi agent gaining shell or file-writing capabilities.
 
-Out of scope: issues in Claude Code itself, which go to [Anthropic](https://www.anthropic.com/responsible-disclosure-policy).
+Out of scope: vulnerabilities in Kimi Code itself, which should be reported to Moonshot AI through the official channels.
 
 ## Supported versions
 

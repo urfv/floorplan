@@ -5,67 +5,35 @@
 | Part | Where it runs | What it sends |
 |---|---|---|
 | Scan, build, updates | your computer (Node.js) | nothing |
-| Writing names and descriptions | Claude, through your Claude Code session | the files Claude reads, the same as any Claude Code task |
-| The map | your browser | nothing. Its layout engine and fonts are bundled into the file, so it works offline |
-| The map's server (`serve.mjs`) | your computer, listening on `127.0.0.1` only | nothing on its own |
-| Asking questions (Claude Code CLI) | a `claude -p` session on your computer, with your account | your question, and the files Claude chooses to read |
-| Asking questions (Claude app) | your claude.ai account | the map (names, descriptions, structure), never your source code. Claude asks before publishing it there |
-| Floorplan Cloud waitlist (only if you sign up) | the map's server, to Floorplan's waitlist service | the email you typed or chose, and "just me" or "with my team". See [below](#floorplan-cloud-waitlist) |
+| Writing names and descriptions | Kimi, through your Kimi Code session | files Kimi reads, as in any Kimi Code task |
+| The map | your browser | nothing; layout engine and fonts are embedded |
+| The map server (`serve.mjs`) | your computer, on `127.0.0.1` only | nothing on its own |
+| Asking questions | a local `kimi -p` session with your account | your question and files the read-only agent chooses to read |
 
-Floorplan has no analytics or telemetry, no dependencies to install, and no install scripts. Its only outside connection is the opt-in waitlist below, and nothing reaches it unless you sign up. The map's few links to documentation open only when you click them.
+Floorplan has no analytics, telemetry, hosted waitlist, upsell or install scripts. It has no runtime package dependencies. Floorplan itself makes no outside requests; network access associated with answers is performed by Kimi Code under your own account and configuration.
 
-The layout engine ([elkjs](https://github.com/kieler/elkjs) 0.9.3, EPL-2.0) and fonts (Inter and JetBrains Mono, SIL Open Font License) are bundled in `skills/floorplan/assets/vendor/` with their licenses, and every build copies them into the map.
+The layout engine ([elkjs](https://github.com/kieler/elkjs) 0.9.3, EPL-2.0) and fonts (Inter and JetBrains Mono, SIL Open Font License) are bundled in `skills/floorplan/assets/vendor/` with their licenses and embedded into every map.
 
 ## The local server
 
-- It listens on `127.0.0.1` only, so other machines on your network can't reach it.
-- Every start creates a random token, which only the map page it serves receives. Asking questions and saving flows require that token, and those requests are refused when they come from another website.
-- Questions run Claude with **read-only** tools: reading files, searching, and the map's own lookup script. It can't edit files or run other commands.
-- It stops by itself two hours after the last tab closes, and `node floorplan/serve.mjs --stop` stops it immediately.
+- It listens on `127.0.0.1` only, so other machines on your network can't connect.
+- Every start creates a random token, which only the served map page receives.
+- Every API requires `x-floorplan-token`, including the live-reload SSE stream. The browser uses `fetch` for that stream, so tokens never appear in URLs, query strings or browser history.
+- API requests from another origin are refused.
+- Static paths are decoded, resolved canonically and checked with `path.relative`. Existing files are also checked with `realpath`, preventing sibling-prefix and symlink escapes. Malformed addresses get an error without stopping the server.
+- Questions run Kimi with a custom agent whose only tools are `Read`, `Grep` and `Glob`. It has no `Bash`, `Write`, `Edit` or subagent access.
+- The server stops two hours after the last tab closes, or immediately with `node floorplan/serve.mjs --stop`.
 
-## Floorplan Cloud waitlist
+## Project files
 
-Once a map has been open for two minutes, a card in its bottom-left corner asks whether you'd like an email when **Floorplan Cloud** launches. It's a hosted version with one shared map per team, kept in sync with GitHub. It asks once:
-- **Not now** asks again in two weeks.
-- **Don't ask again** and signing up both stop it for good, in every project.
-
-Nothing is sent unless you click **Notify me**.
-
-**What's sent:** only the email address in the box, and whether you'd use Floorplan Cloud just yourself or with a team. Nothing about you, your project or your code goes with it.
-
-**Use my Claude email:** this button fills the box with the email of the Claude account your Claude Code is signed in with. Claude Code is asked only at that moment, and you see the address before anything is sent. Nothing is read when you don't click it.
-
-**Where it goes:**
-- The map's local server sends it to a small service on Google Cloud Run. You can read its code [here](https://github.com/haydenschmitty/floorplan/blob/4cb4ff9337b2d021abbd52148e25a1e0016f099d/services/waitlist/server.mjs). It's kept in this repo's history rather than in the plugin, so it isn't downloaded when you install Floorplan.
-- That service adds a row to a private Google Sheet that only Floorplan's maker, [Hayden Smith](https://github.com/haydenschmitty), can see. The row holds the date, the email and your answer.
-
-**What it's used for:** only to email you when Floorplan Cloud launches, and to gauge whether it's worth building. The list is never sold or shared. Every email on it will include a way to unsubscribe, and you can ask to be removed at any time by emailing [hismith142@gmail.com](mailto:hismith142@gmail.com).
-
-**Your IP address** is used briefly to rate-limit sign-ups and is never written to the sheet. Google Cloud keeps its standard request logs, which include IP addresses, for 30 days.
-
-**Turning it off:**
-- Click **Don't ask again**, or
-- set the environment variable `FLOORPLAN_NO_PROMPTS=1`.
-
-Your answer is kept in `~/.floorplan/settings.json`.
-
-**How the service is protected:** its address is in Floorplan's public code, so it's built to be harmless if abused.
-- It only accepts new sign-ups, and never returns anything from the list.
-- A repeat sign-up looks the same as a new one, so nobody can check whether an address is on the list.
-- Input is checked strictly and saved as plain text.
-- Sign-ups are limited per IP address and overall, and the list has a size cap.
-- It runs as a single small instance, so a flood of requests can't run up costs.
+Builds write only inside `floorplan/`. Floorplan does not inject instructions into `AGENTS.md`, `.kimi-code/`, Claude files or git ignore configuration. The map folder ignores itself and is not committed.
 
 ## Secrets
 
-The Health check looks for passwords, API keys and private keys in your code, and for `.env` files that would be committed. When it finds one, it records only the file, the line, the kind of secret, and a masked hint like "starts AKIA…, 20 characters". **Secret values are never stored in the map, printed, or sent anywhere**, and Claude is instructed never to repeat them.
+The Health check looks for passwords, API keys and private keys in code, and for `.env` files that would be committed. Findings contain only the file, line, kind and a masked hint. Secret values are never stored in the map or printed by Floorplan, and Kimi is instructed not to repeat them.
 
-The check is a helpful first pass, not a security audit.
-
-## Git
-
-Nothing Floorplan creates is committed. See [What's in your project](project-files.md#staying-out-of-git).
+This is a helpful first pass, not a security audit.
 
 ## Reporting a vulnerability
 
-Please report security problems privately, as described in [SECURITY.md](../SECURITY.md), rather than in a public issue.
+Please report security problems privately as described in [SECURITY.md](../SECURITY.md), rather than in a public issue.

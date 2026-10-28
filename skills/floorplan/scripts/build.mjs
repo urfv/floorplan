@@ -11,7 +11,6 @@ import { compileGlob, parseArgs, fmtNum, mapDir, keepOutOfGit } from './lib/comm
 import { fallbackFileName, fallbackRouteName, routeKey } from './lib/names.mjs';
 import { buildHealth } from './lib/health.mjs';
 import { buildScreens } from './lib/screens.mjs';
-import { writeClaudeMd } from './lib/claudemd.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = path.resolve(HERE, '..');
@@ -235,7 +234,7 @@ if (fs.existsSync(customFile)) {
   }
   if (dropped) warn(`${dropped} step(s) in custom-flows.json point at code that no longer exists and were left out.`);
 }
-// "Start here" tour: 3-8 narrated stops (node id or file path), written by Claude in architecture.json
+// "Start here" tour: 3-8 narrated stops (node id or file path), written by Kimi in architecture.json
 const outTour = [];
 if (arch.tour !== undefined) {
   if (!Array.isArray(arch.tour)) err('tour must be an array of { node, title, note }');
@@ -244,7 +243,7 @@ if (arch.tour !== undefined) {
     if (ref) outTour.push({ ref, title: isStr(s.title) ? s.title : '', note: isStr(s.note) ? s.note : '' });
   });
 }
-// "Recent work": what Claude just changed, per task, framed against what the user asked for
+// "Recent work": what Kimi just changed, per task, framed against what the user asked for
 // (floorplan/recent-work.json, rewritten on every make/update). Stale refs are warnings, never errors.
 let outRecent = null;
 const recentFile = path.join(outDir, 'recent-work.json');
@@ -433,13 +432,11 @@ const uiDir = path.join(SKILL_DIR, 'assets', 'ui');
 const uiScripts = fs.existsSync(uiDir) ? fs.readdirSync(uiDir).filter((n) => n.endsWith('.js')).sort().map((n) => `<script>/* ui/${n} */\n${fs.readFileSync(path.join(uiDir, n), 'utf8').replace(/<\/script/gi, '<\\/script')}</script>`).join('\n') : '';
 const html = page(graph);
 fs.writeFileSync(path.join(outDir, 'index.html'), html);
-// --artifact: a copy to publish to the Claude app, without this machine's absolute path (editor links)
-if (args.artifact) fs.writeFileSync(path.join(outDir, 'artifact.html'), page({ ...graph, meta: { ...graph.meta, root: null } }));
-// Self-contained helpers next to the map: ask questions through the Claude Code CLI (serve.mjs)
-// and the graph lookups it hands to Claude (query.mjs). They need only Node, not this skill.
-fs.writeFileSync(path.join(outDir, 'query.mjs'), `${graphQuery}
-// ---- cli ----
-${fs.readFileSync(path.join(SKILL_DIR, 'assets', 'query-cli.mjs'), 'utf8')}`);
+// Helpers next to the map: graph lookups, a local server and a read-only Kimi agent.
+fs.writeFileSync(path.join(outDir, 'graph-query.mjs'), `${graphQuery}
+export { createGraphQuery, FLOORPLAN_ANSWER_SCHEMA, FLOORPLAN_FLOW_SCHEMA, floorplanAskInstructions, floorplanFlowInstructions };
+`);
+fs.copyFileSync(path.join(SKILL_DIR, 'assets', 'query-cli.mjs'), path.join(outDir, 'query.mjs'));
 fs.copyFileSync(path.join(SKILL_DIR, 'assets', 'serve.mjs'), path.join(outDir, 'serve.mjs'));
 // the logo and tab icon are inlined so the map stays one self-contained file
 function dataUri(name) { return 'data:image/png;base64,' + fs.readFileSync(path.join(SKILL_DIR, 'assets', name)).toString('base64'); }
@@ -454,8 +451,6 @@ if (graph.screens?.length) report.push(`SCREENS  ${graph.screens.length} detecte
 report.push(graph.recent
   ? `RECENT WORK  ${graph.recent.items.length} card(s) highlighted across ${graph.recent.tasks.length} task(s)`
   : `RECENT WORK  none highlighted${fs.existsSync(recentFile) ? '' : ' (no recent-work.json)'}`);
-// point future Claude Code sessions in this project at the map
-if (!args['no-claude-md']) report.push(`CLAUDE.LOCAL.MD  ${writeClaudeMd(root, outDir)}`);
 report.push(trackedWarning ? `GIT  ! ${trackedWarning}` : 'GIT  floorplan/ is kept out of git (it ignores itself)');
 report.push('');
 report.push(`✓ wrote ${path.relative(root, path.join(outDir, 'index.html'))} (${fmtNum(Math.round(html.length / 1024))} KB) and graph.json`);

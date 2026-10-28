@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 (2026-10-28)
+
+- **Native Kimi Code plugin:** installation, skill placeholders, map questions and guided flows now use Kimi Code instead of Claude Code. Questions run through a read-only custom agent with `Read`, `Grep` and `Glob`, without shell or file-writing tools.
+- **No upsell:** the Floorplan Cloud card, waitlist API, remote service URL, account-email lookup and saved waitlist settings are removed.
+- **No implicit project configuration:** builds write only inside `floorplan/` and no longer inject `CLAUDE.local.md` or change `.git/info/exclude`.
+- **Server hardening:** live-reload SSE authenticates with an HTTP header rather than a query-string token; canonical path and realpath checks block traversal, sibling-prefix and symlink escapes; ESM imports replace dynamic `new Function` execution.
+- **Offline by default:** bundled layout and fonts remain embedded, with regression coverage for external resource loading and the other security promises.
+
 ## 0.1.5 (2026-10-28)
 
 - **Fewer false Health alarms on FastAPI:** a dependency shortcut whose own name says it checks the caller, like `AdminAccess = Annotated[dict, Depends(check)]`, now counts as a login check even when its function has a plain name.

@@ -1,6 +1,5 @@
-# Local Claude Code settings and dev previews
-.claude/
-CLAUDE.local.md
+# Local Kimi Code settings and dev previews
+.kimi-code/
 
 # A floorplan made of this repo itself (root only: skills/floorplan/ is the plugin)
 /floorplan/
