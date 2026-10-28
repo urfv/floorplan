@@ -50,10 +50,10 @@ A count of important issues, and a plain-language list of problems the scan foun
 - files nothing uses;
 - files over about 1,000 lines, which AI struggles to edit safely.
 
-Each issue has **Show on map**, which highlights the affected files and endpoints with notes, and **Fix with Claude**, which copies a ready-made prompt naming the exact files and lines and the safe fix. It's a quick automatic check, not a security audit.
+Each issue has **Show on map**, which highlights the affected files and endpoints with notes, and **Fix with Kimi**, which copies a ready-made prompt naming the exact files and lines and the safe fix. It's a quick automatic check, not a security audit.
 
 ### Recent work
-Appears when Claude has just changed things. It lays the changed cards out on one board, with what you asked for, a summary of what was done, and a note on every card. Elsewhere on the map, changed cards have a green ring and a **Changed** or **New** tag, and the parts that contain them show **N changed**, so you can follow the green down from the top level.
+Appears when Kimi has just changed things. It lays the changed cards out on one board, with what you asked for, a summary of what was done, and a note on every card. Elsewhere on the map, changed cards have a green ring and a **Changed** or **New** tag, and the parts that contain them show **N changed**, so you can follow the green down from the top level.
 
 ### Screens
 Every page of your app that Floorplan detected. Pick one to see everything behind it: its components, the requests it makes, the server code that answers them, the data they touch, and outside services.
@@ -64,7 +64,7 @@ Replays the one-minute tour that runs the first time you open a map.
 ### Flows
 Guided walkthroughs of the app's main jobs, like "Checkout" or "Sign up". A flow moves across the board step by step, with a narration at each stop. Use **←** / **→** or the flow bar's buttons to step through, and **Esc** to stop.
 
-**Request a new flow** lets you describe one in plain words ("how does a refund get back to the customer's card?"), and Claude traces it through the code. Flows you request are saved with the map.
+**Request a new flow** lets you describe one in plain words ("how does a refund get back to the customer's card?"), and Kimi traces it through the code. Flows you request are saved with the map.
 
 ### Filters
 - **Show connections:** turn kinds of lines on or off (Uses, Web requests, Background jobs and so on).
@@ -75,11 +75,11 @@ Guided walkthroughs of the app's main jobs, like "Checkout" or "Sign up". A flow
 
 <img src="images/ask.png" alt="An answer board with numbered cards and a written walkthrough">
 
-Type into the Ask bar at the bottom and press **Enter**. Claude answers in a few sentences and shows an **answer board**: just the cards involved, how they connect, a short note on each, and a numbered walkthrough when the answer is a sequence. Follow-up suggestions appear under the answer. **Back to map** returns to where you were.
+Type into the Ask bar at the bottom and press **Enter**. Kimi answers in a few sentences and shows an **answer board**: just the cards involved, how they connect, a short note on each, and a numbered walkthrough when the answer is a sequence. Follow-up suggestions appear under the answer. **Back to map** returns to where you were.
 
 - **Right-click → Ask about this** on any card or line adds it to your question as context.
-- The label in the bar shows what's answering. **Claude Code** means the CLI, which can read your source code. **Claude app** means the map was opened in the Claude app, which answers from the map alone.
-- If neither is available, the bar explains what's needed. See [Troubleshooting](troubleshooting.md).
+- **Kimi Code** in the bar means the local CLI is answering through a read-only agent that can inspect your source code but cannot edit it or run shell commands.
+- Without the CLI, the bar explains how to enable it; the rest of the map still works offline. See [Troubleshooting](troubleshooting.md).
 
 ## Right-click menus
 

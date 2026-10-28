@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // floorplan scanner: discover every repo under a codebase root, list files, extract imports,
 // symbols and HTTP routes/calls, resolve them, and write floorplan/.cache/scan.json.
-// Prints a compact summary meant to be read by Claude (the JSON itself can be large).
+// Prints a compact summary meant to be read by Kimi (the JSON itself can be large).
 //
 // usage: node scan.mjs [root] [--out <file>] [--include-worktrees] [--max-file-kb 512]
 
@@ -166,7 +166,7 @@ function dedupeExt(list) {
   return [...m.entries()].map(([k, count]) => { const [from, pkg] = k.split('|'); return { from, pkg, count }; });
 }
 
-// ---------- 6. summary for Claude ----------
+// ---------- 6. summary for Kimi ----------
 const code = scan.files.filter((f) => f.category === 'code');
 const out = [];
 const line = (s = '') => out.push(s);

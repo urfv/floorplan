@@ -119,7 +119,7 @@ svg.lod-low .foot .meta { visibility: hidden; }
 .node:hover .card.external { background: rgba(255, 255, 255, .03); }
 .card.dir { background: rgba(25, 25, 25, .7); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
 .card.module { background: var(--raise); }
-/* recent work: cards Claude just changed (green ring + tag), and the parts that contain them (soft ring + count) */
+/* recent work: cards Kimi just changed (green ring + tag), and the parts that contain them (soft ring + count) */
 .card.recent { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--recent) 62%, transparent), var(--shadow-card); }
 .node:hover .card.recent { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--recent) 85%, transparent), 0 18px 40px -20px rgba(0, 0, 0, 1); }
 .card.recent-in { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--recent) 30%, transparent), var(--shadow-card); }
@@ -575,7 +575,7 @@ function chain(item) {
   chainCache.set(item, out);
   return out;
 }
-// Recent work (G.recent): the cards Claude just changed, and how many changes sit inside each part
+// Recent work (G.recent): the cards Kimi just changed, and how many changes sit inside each part
 const recentTasks = G.recent?.tasks || [];
 const recentBy = new Map();
 for (const it of G.recent?.items || []) { if (!parentOf.has(it.id)) continue; if (!recentBy.has(it.id)) recentBy.set(it.id, []); recentBy.get(it.id).push(it); }
@@ -636,7 +636,7 @@ function enclosingSymbol(f, line) {
   return best && parentOf.has(best.id) ? best.id : null;
 }
 
-/** An answer's ad-hoc board: just the cards Claude picked, and every connection among them. */
+/** An answer's ad-hoc board: just the cards Kimi picked, and every connection among them. */
 function buildAnswerView() {
   const visible = state.answer.items.map((x) => x.id);
   const vis = new Set(visible);
@@ -1504,9 +1504,9 @@ function renderFlowMenu() {
   fm.querySelector('[data-new]').onclick = showFlowForm;
 }
 function showFlowForm() {
-  fm.innerHTML = `<form class="ff"><label>Describe what to trace, and Claude builds a step-by-step flow through the map.</label>
+  fm.innerHTML = `<form class="ff"><label>Describe what to trace, and Kimi builds a step-by-step flow through the map.</label>
     <textarea placeholder="e.g. How does an order end up charged through Stripe?" spellcheck="false"></textarea>
-    ${askState.engine ? '' : '<div class="note">Needs the Claude Code CLI (run node floorplan/serve.mjs) or the Claude app.</div>'}
+    ${askState.engine ? '' : '<div class="note">Needs the Kimi Code CLI. Run node floorplan/serve.mjs.</div>'}
     <div class="ffa"><button type="button" class="btn" data-cancel>Cancel</button><button type="submit" class="btn primary" ${askState.engine ? '' : 'disabled'}>Build flow</button></div></form>`;
   const form = fm.querySelector('form'), ta = form.querySelector('textarea');
   setTimeout(() => ta.focus(), 30);
@@ -1551,22 +1551,50 @@ async function loadCustomFlows() {
   renderFlowMenu();
 }
 
-// Served by serve.mjs: reload in place when the map is rebuilt (the view lives in the URL hash). If the
-// server restarts, this tab's token is stale and the stream closes for good, so wait for it to come back.
+// Served by serve.mjs: reload in place when the map is rebuilt. fetch keeps the auth token out of the URL.
 (function liveReload() {
   const S = window.FLOORPLAN_SERVER;
-  if (!S || typeof EventSource === 'undefined') return;
-  const reload = () => { toast('Map updated'); setTimeout(() => location.reload(), 500); };
-  const es = new EventSource('/api/events?token=' + encodeURIComponent(S.token));
-  es.addEventListener('reload', reload);
-  es.onerror = () => {
-    if (es.readyState !== EventSource.CLOSED) return; // a dropped connection retries on its own
-    // every second at first (a restart takes about that long), then every 5s, for up to 30 minutes
-    const t0 = Date.now();
-    const check = () => fetch('/', { cache: 'no-store' }).then((r) => (r.ok ? reload() : next()), next);
-    const next = () => { const age = Date.now() - t0; if (age < 30 * 60000) setTimeout(check, age < 30000 ? 1000 : 5000); };
-    check();
+  if (!S) return;
+  const ctl = new AbortController();
+  let reloading = false;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const reload = () => {
+    if (reloading) return;
+    reloading = true;
+    toast('Map updated');
+    setTimeout(() => location.reload(), 500);
   };
+  async function waitForRestart() {
+    const started = Date.now();
+    while (!reloading && Date.now() - started < 30 * 60000) {
+      try { if ((await fetch('/', { cache: 'no-store', signal: ctl.signal })).ok) return reload(); } catch {}
+      await sleep(1000);
+    }
+  }
+  async function connect() {
+    while (!reloading) {
+      try {
+        const res = await fetch('/api/events', { headers: { 'x-floorplan-token': S.token }, signal: ctl.signal });
+        if (res.status === 403) { await waitForRestart(); return; }
+        if (!res.ok || !res.body) throw new Error('events unavailable');
+        const reader = res.body.getReader(), dec = new TextDecoder();
+        let buf = '';
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let i;
+          while ((i = buf.indexOf('\n\n')) >= 0) {
+            const block = buf.slice(0, i); buf = buf.slice(i + 2);
+            if (/^event: reload$/m.test(block)) { reload(); return; }
+          }
+        }
+      } catch { if (reloading || ctl.signal.aborted) return; }
+      await sleep(1000);
+    }
+  }
+  window.addEventListener('pagehide', () => ctl.abort(), { once: true });
+  connect();
 })();
 
 async function requestFlow(prompt) {
@@ -1579,9 +1607,9 @@ async function requestFlow(prompt) {
   const progress = (t) => { lines.push(t); showProgress(label, lines.slice(-6)); };
   showProgress(label, lines);
   try {
-    const raw = askState.engine === 'cli' ? await askViaCli(prompt, progress, 'flow') : await askViaApp(prompt, progress, 'flow');
+    const raw = await askViaCli(prompt, progress, 'flow');
     const steps = (raw.steps || []).map((s) => ({ ref: String(s.id || ''), note: String(s.note || '') })).filter((s) => Q.exists(s.ref));
-    if (steps.length < 2) throw { code: 'flow_empty', message: "Claude couldn't find enough connected steps for that. Try naming where it starts or ends." };
+    if (steps.length < 2) throw { code: 'flow_empty', message: "Kimi couldn't find enough connected steps for that. Try naming where it starts or ends." };
     const fl = { id: 'custom-' + Date.now().toString(36), title: String(raw.title || prompt).slice(0, 80), description: String(raw.description || ''), steps, custom: true };
     G.flows.push(fl);
     await saveCustomFlow(fl);
@@ -1645,52 +1673,38 @@ function highlightFlow(a, b) {
   anim.beginElement?.();
 }
 
-// ======================= ask (Claude Code CLI via serve.mjs, or the Claude app) =======================
+// ======================= ask (Kimi Code CLI via serve.mjs) =======================
 const Q = createGraphQuery(G);
-const askState = { engine: null, sample: null, busy: false, ctl: null, session: null, turns: [], last: null };
+const askState = { engine: null, busy: false, ctl: null, session: null, last: null };
 const askInput = $('#ask-input'), askSend = $('#ask-send'), sheet = $('#ask-sheet'), warn = $('#ask-warn');
-const DOCS = 'https://docs.claude.com/en/docs/claude-code/overview';
+const DOCS = 'https://www.kimi.com/code/docs/en/';
 const WARNINGS = {
-  no_engine: `Asking needs the <b>Claude Code CLI</b>. From the codebase root run <code>node floorplan/serve.mjs</code>, or open this map in the Claude app.`,
-  cli_missing: `Requires the <b>Claude Code CLI</b> installed to work. <a href="${DOCS}" target="_blank" rel="noopener">Install it</a>, then restart <code>serve.mjs</code>.`,
-  not_logged_in: `The Claude Code CLI isn't signed in. Run <code>claude</code> in a terminal once to sign in, then ask again.`,
-  app_unavailable: `Claude isn't available for this map in this view.`,
-  not_granted: `Claude access was declined for this map. Reload the page to be asked again.`,
-  cli_tip: `Install the <b>Claude Code CLI</b> for a better experience: it can read your source code, not just this map. <a href="${DOCS}" target="_blank" rel="noopener">Install it</a>, then run <code>node floorplan/serve.mjs</code> in the codebase.`,
+  no_engine: `Asking needs the <b>Kimi Code CLI</b>. From the codebase root run <code>node floorplan/serve.mjs</code>.`,
+  cli_missing: `Requires the <b>Kimi Code CLI</b>. <a href="${DOCS}" target="_blank" rel="noopener">Install it</a>, then restart <code>serve.mjs</code>.`,
+  not_logged_in: `The Kimi Code CLI isn't signed in. Run <code>kimi login</code> in a terminal, then ask again.`,
 };
 function setWarning(code) {
   warn.hidden = !code;
-  warn.classList.toggle('info', code === 'cli_tip');
+  warn.classList.remove('info');
   if (!code) return;
-  warn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>${WARNINGS[code] || h(code)}</span>${code === 'no_engine' ? '<button type="button" data-copycmd>Copy command</button>' : code === 'cli_tip' ? '<button type="button" data-dismiss>Got it</button>' : ''}`;
-  warn.querySelector('[data-dismiss]')?.addEventListener('click', () => setWarning(null));
+  warn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>${WARNINGS[code] || h(code)}</span>${code === 'no_engine' ? '<button type="button" data-copycmd>Copy command</button>' : ''}`;
   warn.querySelector('[data-copycmd]')?.addEventListener('click', (e) => { navigator.clipboard?.writeText('node floorplan/serve.mjs'); e.target.textContent = 'Copied'; });
 }
 function setEngine(engine, label, warning) {
   askState.engine = engine;
   const tag = $('#ask-engine');
   tag.className = 'engine ' + (engine ? 'ok' : 'warn');
-  tag.innerHTML = `<i></i>${h(engine ? label : 'Unavailable')}${engine === 'app' ? `<button type="button" class="einfo" title="Install the Claude Code CLI for a better experience" aria-label="About the Claude Code CLI"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>` : ''}`;
-  tag.querySelector('.einfo')?.addEventListener('click', () => setWarning(warn.hidden || !warn.classList.contains('info') ? 'cli_tip' : null));
-  tag.title = engine === 'cli' ? 'Answers come from your local Claude Code CLI, which can read the source' : engine === 'app' ? 'Answers come from Claude in the Claude app, using the map (not the source files)' : '';
+  tag.innerHTML = `<i></i>${h(engine ? label : 'Unavailable')}`;
+  tag.title = engine ? 'Answers come from your local Kimi Code CLI, which can read the source' : '';
   askInput.disabled = !engine;
   askSend.disabled = !engine;
   askInput.placeholder = engine ? `Ask anything about ${G.project.name}…` : 'Asking is unavailable';
   if (typeof renderChips === 'function' && askState.context) renderChips();
   setWarning(warning || null);
 }
-async function detectEngine() {
+function detectEngine() {
   const S = window.FLOORPLAN_SERVER;
-  if (S) { S.cli ? setEngine('cli', 'Claude Code' + (S.model ? ' · ' + S.model : '')) : setEngine(null, null, 'cli_missing'); return; }
-  if (window.claude?.use) {
-    setEngine(null, null); $('#ask-engine').innerHTML = '<i></i>connecting…';
-    let sample = null;
-    try { sample = await window.claude.use('sample'); } catch {}
-    const lim = sample ? await sample.limits().catch(() => null) : null;
-    if (sample && lim?.tools) { askState.sample = sample; setEngine('app', 'Claude'); return; }
-    setEngine(null, null, 'app_unavailable');
-    return;
-  }
+  if (S) { S.cli ? setEngine('cli', 'Kimi Code' + (S.model ? ' · ' + S.model : '')) : setEngine(null, null, 'cli_missing'); return; }
   setEngine(null, null, 'no_engine');
 }
 
@@ -1756,10 +1770,9 @@ function showAnswer(raw, question) {
   else renderAnswer(a);
 }
 function showFailure(question, code, message, partial) {
-  if (code === 'not_logged_in' || code === 'not_granted') setWarning(code);
-  if (code === 'not_granted' || code === 'sampling_disabled') setEngine(null, null, code === 'not_granted' ? 'not_granted' : 'app_unavailable');
+  if (code === 'not_logged_in') setWarning(code);
   if (code === 'cancelled') { sheet.hidden = true; return; }
-  const copy = { rate_limited: 'Claude is busy or you have hit a usage limit. Try again in a bit.', not_logged_in: 'The Claude Code CLI needs you to sign in first.', cli_missing: 'Claude Code CLI not found.', invalid_json: "Claude's answer couldn't be read as a map view. Try rephrasing.", session_expired: 'Your Claude session expired. Sign in again.' }[code];
+  const copy = { rate_limited: 'Kimi is busy or you have hit a usage limit. Try again in a bit.', not_logged_in: 'The Kimi Code CLI needs you to sign in first.', cli_missing: 'Kimi Code CLI not found.', invalid_json: "Kimi's answer couldn't be read as a map view. Try rephrasing.", session_expired: 'Your Kimi session expired. Sign in again.' }[code];
   sheetShell(question, `<p class="err">${h(copy || message || 'Something went wrong.')}</p>${partial ? md(partial) : ''}${code === 'cli_error' && message ? `<p style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${h(message.slice(0, 400))}</p>` : ''}`);
 }
 function setBusy(b) {
@@ -1799,28 +1812,6 @@ async function askViaCli(question, progress, mode = 'ask') {
   return answer;
 }
 
-async function askViaApp(question, progress, mode = 'ask') {
-  const clip = (v) => { const s = JSON.stringify(v); return s.length > 24000 ? s.slice(0, 24000) + '…(truncated)' : s; };
-  const tools = [
-    { name: 'find_items', description: 'Search the map by words. Returns up to 15 items {id, type, name, description, path}. kind optionally limits results to module, file, endpoint or symbol.',
-      inputSchema: { type: 'object', properties: { query: { type: 'string' }, kind: { type: 'string', enum: ['module', 'file', 'endpoint', 'symbol'] } }, required: ['query'] },
-      execute: ({ query, kind }) => { progress(`Searching the map for "${query}"`); return clip(Q.find(String(query), kind ? String(kind) : undefined)); } },
-    { name: 'get_item', description: "Details of one map item by id: its description, parent module, children/files, endpoints, exports, and what it depends on and is used by (with ids).",
-      inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
-      execute: ({ id }) => { const b = Q.brief(String(id)); progress(`Looking at ${b ? b.name : id}`); return clip(Q.show(String(id))); } },
-    { name: 'dependency_path', description: 'Shortest chain of imports/HTTP calls from anything inside one item to anything inside another. Returns hops with ids.',
-      inputSchema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } }, required: ['from', 'to'] },
-      execute: ({ from, to }) => { progress('Tracing a dependency path'); return clip(Q.path(String(from), String(to))); } },
-  ];
-  const flow = mode === 'flow';
-  const rules = `${flow ? floorplanFlowInstructions(G, 'app') : floorplanAskInstructions(G, 'app')}\nThe JSON must match this schema:\n${JSON.stringify(flow ? FLOORPLAN_FLOW_SCHEMA : FLOORPLAN_ANSWER_SCHEMA)}\n\nMap overview:\n${clip(Q.overview())}`;
-  const turns = [{ role: 'user', content: rules }, ...(flow ? [] : askState.turns.slice(-6)), { role: 'user', content: question }];
-  const answer = await askState.sample.json(turns, { tools, signal: askState.ctl.signal });
-  if (flow) return answer || {};
-  askState.turns.push({ role: 'user', content: question }, { role: 'assistant', content: JSON.stringify({ title: answer?.title, answer: answer?.answer }) });
-  return answer || {};
-}
-
 askState.context = [];
 /** Pin a map item to the next question ("Ask about this"). */
 function addAskContext(id) {
@@ -1847,7 +1838,7 @@ async function submitAsk() {
   askInput.value = '';
   askState.context = []; renderChips();
   const shown = question;
-  // what Claude sees: the question plus the pinned items, by id, so it starts from them
+  // what Kimi sees: the question plus the pinned items, by id, so it starts from them
   if (ctxIds.length) question += `\n\nFocus on these map items: ${ctxIds.map((id) => `${id} (${info(id).name})`).join(', ')}.`;
   setBusy(true);
   askState.ctl = new AbortController();
@@ -1855,7 +1846,7 @@ async function submitAsk() {
   const progress = (t) => { lines.push(t); showProgress(shown, lines.slice(-6)); };
   showProgress(shown, lines);
   try {
-    const raw = askState.engine === 'cli' ? await askViaCli(question, progress) : await askViaApp(question, progress);
+    const raw = await askViaCli(question, progress);
     showAnswer(raw, shown);
   } catch (e) {
     if (e?.name === 'AbortError') showFailure(shown, 'cancelled');

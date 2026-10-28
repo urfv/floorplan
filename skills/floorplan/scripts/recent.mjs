@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Facts for marking "recent work" on the map: what changed since the last map (from refresh.mjs),
-// uncommitted changes, and recent commits, each tied to the card it shows up as. Claude adds the why
+// uncommitted changes, and recent commits, each tied to the card it shows up as. Kimi adds the why
 // (what the user asked for) and writes floorplan/recent-work.json. Read-only.
 // usage: node recent.mjs [root] [--days 7]
 import fs from 'node:fs';

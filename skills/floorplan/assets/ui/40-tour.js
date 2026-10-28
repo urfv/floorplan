@@ -1,6 +1,6 @@
 // "Start here": a calm one-minute tour on first open. What the app is, its main parts, the outside
 // services it leans on, then one real path traced end to end. Steps come from graph.tour (written by
-// Claude in architecture.json) or are built from the map itself.
+// Kimi in architecture.json) or are built from the map itself.
 (() => {
   const SC = window.Floorplan;
   if (!SC) return;

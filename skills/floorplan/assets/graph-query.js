@@ -1,5 +1,5 @@
-// floorplan graph queries, shared by the viewer (as page tools for the Claude app) and by
-// floorplan/query.mjs (as a CLI the Claude Code CLI calls). Plain script: no imports, no exports.
+// floorplan graph queries, shared by the viewer, query.mjs and the local Kimi server.
+// The browser gets this as a plain script; build.mjs also emits it as an ESM module.
 // Item ids: n:<node id>  f:<file path>  r:<route index>  s:<file path>#<export index>
 
 function createGraphQuery(G) {
@@ -176,7 +176,7 @@ function createGraphQuery(G) {
   return { find, show, path, overview, exists, brief };
 }
 
-// What an answer looks like, for both engines (JSON Schema).
+// What an answer looks like (JSON Schema).
 const FLOORPLAN_ANSWER_SCHEMA = {
   type: 'object',
   properties: {
@@ -200,27 +200,22 @@ const FLOORPLAN_FLOW_SCHEMA = {
   required: ['title', 'steps'],
 };
 
-function floorplanFlowInstructions(G, engine) {
+function floorplanFlowInstructions(G) {
   return [
     `You build guided flows for an interactive architecture map of the codebase "${G.project.name}". A flow is an ordered walkthrough: each step is one map item (module n:..., file f:..., endpoint r:..., or export s:...) and a note on what happens there.`,
-    engine === 'cli'
-      ? 'Find the items with `node floorplan/query.mjs find "<words>"`, `show <id>` and `path <fromId> <toId>`; read source files when you need to confirm the order of events.'
-      : 'Find the items with the tools find_items, get_item and dependency_path.',
+    'Use the supplied map overview and item catalogue. Read or grep source files when you need to confirm the order of events.',
     'Trace what the person asks for from its trigger (a user action, webhook, cron job) to its final effect (database write, external call, response).',
     'Use 3-9 steps. Prefer the most specific item that tells the story (an endpoint over its file, a file over its module), and make consecutive steps things that really call or import each other.',
     'Reply with JSON only: {"title", "description", "steps": [{"id", "note"}]}. Only use ids the map gave you.',
   ].join('\n');
 }
 
-function floorplanAskInstructions(G, engine) {
-  const tools = engine === 'cli'
-    ? `Query the map with Bash: \`node floorplan/query.mjs overview\`, \`node floorplan/query.mjs find "<words>" [--kind module|file|endpoint|symbol]\`, \`node floorplan/query.mjs show <id>\`, \`node floorplan/query.mjs path <fromId> <toId>\`. Every result is JSON with ids. Start with the map; read or grep source files when you need specifics the map does not have.`
-    : `Use the tools find_items, get_item and dependency_path to explore the map. You cannot read source files, so answer from the map's names, descriptions, endpoints and connections, and say so when a question needs the code itself.`;
+function floorplanAskInstructions(G) {
   return [
     `You answer questions about the codebase "${G.project.name}" for someone exploring an interactive architecture map of it.`,
     `The map has cards for modules (ids n:...), files (f:<path>), HTTP endpoints (r:<number>) and exported symbols (s:<path>#<number>), each with a human-readable name and description, connected by imports and HTTP calls.`,
-    tools,
-    'Use a few lookups, not dozens. Then reply with JSON only: {"title", "answer", "items", "steps", "followups"}.',
+    'Start with the supplied map overview and item catalogue; read or grep source files when you need specifics the map does not have. Use a few lookups, not dozens.',
+    'Then reply with JSON only: {"title", "answer", "items", "steps", "followups"}.',
     '- answer: Markdown, at most ~180 words, plain and specific. Refer to map items inline as [[id]] (they become clickable).',
     '- items: the 3-14 cards that best show the answer, most important first, each with a note (at most 15 words) on its role.',
     '- steps: an ordered walkthrough when the answer is a sequence (a request path, a data flow); otherwise [].',

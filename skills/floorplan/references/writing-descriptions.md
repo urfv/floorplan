@@ -106,7 +106,7 @@ The default audience is `"everyone"`. Write as if explaining the app to its owne
 | rate limit | a cap on how often something can be asked |
 | reconcile | compares two records of the same thing and fixes differences |
 | refactor, tech debt | (leave out) |
-| MCP server | a connection that lets AI assistants (like Claude) look things up in your app |
+| MCP server | a connection that lets AI assistants (like Kimi) look things up in your app |
 | unit tests, test suite | automatic checks that the code still works |
 
 ### Examples

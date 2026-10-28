@@ -11,14 +11,14 @@ body:
     id: what
     attributes:
       label: What happened?
-      description: What you asked Claude, what you expected, and what happened instead.
+      description: What you asked Kimi, what you expected, and what happened instead.
     validations:
       required: true
   - type: textarea
     id: output
     attributes:
       label: Output
-      description: Anything Claude or the scripts printed, especially lines starting with ✗ or !
+      description: Anything Kimi or the scripts printed, especially lines starting with ✗ or !
       render: text
   - type: input
     id: project
@@ -29,9 +29,9 @@ body:
   - type: dropdown
     id: where
     attributes:
-      label: Where were you using Claude Code?
+      label: Where were you using Kimi Code?
       options:
-        - Desktop app (Code tab)
+        - Desktop app
         - CLI in a terminal
         - IDE extension
         - Other

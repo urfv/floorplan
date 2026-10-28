@@ -2,7 +2,7 @@
 // floorplan refresh: bring an existing map up to date without redoing the whole thing.
 // Re-scans, compares against the last build (graph.json), reconciles descriptions/*.json
 // (renames carried over, deleted entries removed, entries whose exports/routes changed flagged
-// with "review"), rebuilds, and reports exactly what is left for Claude to look at.
+// with "review"), rebuilds, and reports exactly what is left for Kimi to look at.
 //
 // usage: node refresh.mjs [root]
 

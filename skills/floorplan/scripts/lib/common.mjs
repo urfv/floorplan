@@ -126,7 +126,7 @@ export function mapDir(root, { migrate = true } = {}) {
   return dir;
 }
 /** Extra directories skipped when walking outside of git (where .gitignore can't help). */
-export const WALK_IGNORE_DIRS = new Set([...HARD_IGNORE_DIRS, 'dist', 'build', 'out', 'target', 'coverage', '.cache', 'vendor', 'bin', 'obj', 'env', '.vscode', '.claude']);
+export const WALK_IGNORE_DIRS = new Set([...HARD_IGNORE_DIRS, 'dist', 'build', 'out', 'target', 'coverage', '.cache', 'vendor', 'bin', 'obj', 'env', '.vscode', '.claude', '.kimi-code']);
 
 export function classify(relPath, bytes) {
   const base = path.posix.basename(relPath).toLowerCase();

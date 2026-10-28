@@ -1,56 +1,48 @@
 # Troubleshooting
 
-### The Ask bar says it needs the Claude Code CLI
-The map is open without a way to ask questions. Either:
-- install the [Claude Code CLI](https://code.claude.com/docs/en/overview), sign in, then ask Claude to update the floorplan or run `node floorplan/serve.mjs`;
-- or open the map in the Claude app: ask Claude to "publish my floorplan to the Claude app". Answers there come from the map only.
+### The Ask bar says it needs the Kimi Code CLI
+Install [Kimi Code](https://www.kimi.com/code/docs/en/), sign in with `kimi login`, then run `node floorplan/serve.mjs` from the codebase root. Opening `index.html` directly provides only the offline map, without Ask or generated flows.
 
 ### The CLI is installed but isn't found
-`serve.mjs` looks for `claude` on your PATH and in `~/.local/bin`. If it lives somewhere else:
+`serve.mjs` looks for `kimi` on your PATH and in `~/.local/bin`. If it lives somewhere else:
 
 ```bash
-node floorplan/serve.mjs --claude /path/to/claude
+node floorplan/serve.mjs --kimi /path/to/kimi
 ```
+
+### Ask says you aren't signed in
+Run `kimi login` in a terminal and try again. To select another configured model, start the server with `--model <alias>`.
 
 ### `node` isn't recognized
-Install [Node.js](https://nodejs.org) 18 or newer, then start a new session so Claude Code picks it up.
-
-### Claude keeps asking to run `node` scripts
-Floorplan pre-approves its own scripts while it's running, but Claude Code may still ask in some setups. Choose the option to always allow them for this project.
+Install [Node.js](https://nodejs.org) 18 or newer, then start a new Kimi session so it picks up the updated PATH.
 
 ### The skill doesn't show up
-Plugins load when a session starts, so start a new one after installing. Check that it's installed and enabled:
-
-```bash
-claude plugin list
-```
-
-Plain requests like "make me a floorplan" work without the slash command. If you do want it, it's `/floorplan:floorplan`.
+Run `/plugins list` to check that Floorplan is installed and enabled, then `/reload` or start a new session. `/plugins info floorplan` shows manifest diagnostics. Plain requests like "make me a floorplan" work automatically; the explicit form is `/skill:floorplan:floorplan`.
 
 ### The map looks out of date
-Ask Claude to "update the floorplan". If a tab was already open, it reloads itself once the update finishes.
+Ask Kimi to "update the floorplan". An open tab reloads when the update finishes.
 
 ### The map is blank, or stuck on "Laying out"
-Maps made before version 0.1.3 load their layout engine from the internet, so check your connection or any content blocker, or ask Claude to "update the floorplan". Newer maps have everything built in and work offline.
+Rebuild the map. Current maps embed the layout engine and fonts and work offline; maps made by upstream versions before 0.1.3 may still load old external resources until rebuilt.
 
 ### A connection is missing
-Floorplan finds most web requests and imports by reading the code, but not all of them, for example requests to an address that only exists in settings. Ask Claude to add the missing connection to the floorplan; it records it in `architecture.json` and it stays on every update.
+Floorplan uses static pattern matching, so it can miss requests whose address exists only in settings. Ask Kimi to add the connection; it is recorded in `architecture.json` and kept on updates.
 
 ### A file is in the wrong part, or under "Unassigned"
-Ask Claude to move it, or edit the `paths` patterns in `floorplan/architecture.json` and ask for an update.
+Ask Kimi to move it, or edit `paths` in `floorplan/architecture.json` and request an update.
 
 ### "floorplan/ already exists here and isn't a map"
-Your project has its own folder called `floorplan`, which Floorplan won't write into. Rename your folder, or ask Claude to build the map somewhere else; the scan and build scripts accept `--out <folder>`.
+Your project has its own folder called `floorplan`, which Floorplan won't overwrite. Rename it, or ask Kimi to build elsewhere; scan and build accept `--out <folder>`.
 
 ### `git status` shows files under `floorplan/`
-They were committed before Floorplan started ignoring the folder. Untrack them, keeping the files on disk:
+They were committed before Floorplan started ignoring the folder. Untrack them while keeping the files:
 
 ```bash
 git rm -r --cached floorplan
 ```
 
 ### Port 4378 is in use
-Nothing to do. The server moves to the next free port, and the URL it prints, or that Claude gives you, is the right one.
+Nothing to do. The server chooses the next free port; use the URL it prints.
 
 ### Stopping the background server
 
@@ -58,7 +50,7 @@ Nothing to do. The server moves to the next free port, and the URL it prints, or
 node floorplan/serve.mjs --stop
 ```
 
-It also stops by itself two hours after the last tab closes.
+It also stops two hours after the last tab closes.
 
 ### Still stuck?
-[Open an issue](https://github.com/haydenschmitty/floorplan/issues/new/choose) with what you asked, what happened, and the output Claude showed. Please leave out anything private from your code.
+[Open an issue](https://github.com/urfv/floorplan/issues/new/choose) with what you asked, what happened and the output Kimi showed. Leave out private code and secrets.

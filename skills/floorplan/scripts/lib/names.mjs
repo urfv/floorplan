@@ -1,4 +1,4 @@
-// Fallback human-readable names, used until Claude writes real ones in floorplan/descriptions/.
+// Fallback human-readable names, used until Kimi writes real ones in floorplan/descriptions/.
 import path from 'node:path';
 
 const P = path.posix;

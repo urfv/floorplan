@@ -1,4 +1,4 @@
-// Recent work: what Claude just changed (graph.recent, from floorplan/recent-work.json), framed against
+// Recent work: what Kimi just changed (graph.recent, from floorplan/recent-work.json), framed against
 // what the user asked for. Cards carry the green tag and hover note (core viewer); this adds the header
 // button that lays the changed cards out on one board, and the panel sections. Talks to the viewer only
 // through window.Floorplan.

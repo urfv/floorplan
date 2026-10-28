@@ -1,0 +1,29 @@
+{
+  "name": "floorplan",
+  "version": "0.2.0",
+  "description": "An interactive map of your codebase for Kimi Code, with architecture diagrams, health checks, screens, guided flows and read-only questions answered from real code.",
+  "author": {
+    "name": "Hayden Smith; Kimi fork maintained by urfv",
+    "url": "https://github.com/urfv/floorplan"
+  },
+  "homepage": "https://github.com/urfv/floorplan",
+  "license": "MIT",
+  "keywords": [
+    "codebase",
+    "architecture",
+    "map",
+    "visualization",
+    "onboarding",
+    "diagram",
+    "documentation",
+    "kimi-code"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Floorplan",
+    "shortDescription": "See how your app actually fits together",
+    "longDescription": "Kimi reads your codebase and draws an interactive map of its parts, files, endpoints and connections. Ask questions through a local read-only Kimi agent.",
+    "developerName": "urfv",
+    "websiteURL": "https://github.com/urfv/floorplan"
+  }
+}

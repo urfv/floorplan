@@ -13,5 +13,5 @@
 - [ ] No secret values stored or printed
 - [ ] No details of a real private project in code, comments, docs or screenshots
 - [ ] `npm test` passes
-- [ ] `claude plugin validate .` passes
+- [ ] Local `/plugins info floorplan` shows no diagnostics
 - [ ] `CHANGELOG.md` updated, if people will notice the change

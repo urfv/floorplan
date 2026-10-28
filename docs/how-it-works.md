@@ -1,15 +1,15 @@
 # How it works
 
-Floorplan splits the work between scripts and Claude. The scripts do everything mechanical: finding files, parsing code, matching requests to endpoints, laying out the map. They're plain Node.js with no dependencies, and they cost no tokens. Claude does what only a reader of the code can: deciding what the parts of your app *are*, and explaining them plainly.
+Floorplan splits the work between scripts and Kimi. The scripts do everything mechanical: finding files, parsing code, matching requests to endpoints, laying out the map. They're plain Node.js with no dependencies, and they cost no tokens. Kimi does what only a reader of the code can: deciding what the parts of your app *are*, and explaining them plainly.
 
 ```mermaid
 flowchart TD
     status["status: is there a map already?"] -->|no| scan
     status -->|yes| refresh["refresh: re-scan, carry over what didn't change"]
-    scan["scan: repos, files, imports, endpoints, requests"] --> arch["Claude writes architecture.json<br/>the parts of the app, outside services, flows, tour"]
+    scan["scan: repos, files, imports, endpoints, requests"] --> arch["Kimi writes architecture.json<br/>the parts of the app, outside services, flows, tour"]
     arch --> build["build: assign files, connect everything,<br/>Health, screens, the map"]
-    build --> describe["Claude names and describes every file and endpoint"]
-    describe --> recent["Claude marks recent work"]
+    build --> describe["Kimi names and describes every file and endpoint"]
+    describe --> recent["Kimi marks recent work"]
     refresh --> describe
     recent --> open["open: serve the map and show it"]
 ```
@@ -38,11 +38,11 @@ The most useful lines on the map connect a screen's web requests to the server c
   - small helpers in the same file that add a prefix, like `call('/definitions')`.
 - **Matches** the two. When a request only spells out part of the address, because the base URL lives in settings, Floorplan learns each client's base path and prefers matches that fit it.
 
-It's pattern matching, not a compiler, so it catches most connections but not all. If an important link is missing, ask Claude to add it to the floorplan, and it will record it as an explicit connection.
+It's pattern matching, not a compiler, so it catches most connections but not all. If an important link is missing, ask Kimi to add it to the floorplan, and it will record it as an explicit connection.
 
-## 3. Claude describes the system
+## 3. Kimi describes the system
 
-Claude reads the scan summary, READMEs, setup files and entry points, then writes `architecture.json`:
+Kimi reads the scan summary, READMEs, setup files and entry points, then writes `architecture.json`:
 
 - the main parts of your app, each with a plain summary;
 - the outside services it really talks to (databases, payment providers, email);
@@ -51,15 +51,15 @@ Claude reads the scan summary, READMEs, setup files and entry points, then write
 
 The build then assigns every file to the deepest part whose patterns match, and reports anything left over.
 
-Next, `describe.mjs` writes a worksheet for each part. A worksheet is a digest of every file and endpoint: what it defines, its doc comments, what it uses and what uses it. Claude fills in a name and description for each. On large projects, the worksheets are split across parallel Claude helpers.
+Next, `describe.mjs` writes a worksheet for each part. A worksheet is a digest of every file and endpoint: what it defines, its doc comments, what it uses and what uses it. Kimi fills in a name and description for each. On large projects, the worksheets are split across parallel Kimi helpers.
 
 By default everything is written for the app's owner, not an engineer: what each thing does for the business, in everyday words. Ask for a developer-facing map and it switches to technical style.
 
 ## 4. Build
 
-`build.mjs` validates everything Claude wrote and reports problems by name ("did you mean …"). It then:
+`build.mjs` validates everything Kimi wrote and reports problems by name ("did you mean …"). It then:
 
-- connects the parts, using imports, matched requests and Claude's explicit connections;
+- connects the parts, using imports, matched requests and Kimi's explicit connections;
 - runs the **Health** check;
 - detects **screens**: Next.js, React Router, Vue, SvelteKit, Remix, Nuxt, Astro, Expo, Angular, TanStack;
 - writes `graph.json` and the self-contained `index.html`.
@@ -68,7 +68,7 @@ The map lays itself out in your browser with [ELK](https://eclipse.dev/elk/), so
 
 ## 5. Recent work
 
-After every make or update, Claude records what was just worked on in `recent-work.json`. `recent.mjs` lists the facts: what changed since the last map, uncommitted changes, and recent commits, each matched to its card. Claude adds the *why*: what you asked for, and how each change serves it. The previous highlights are replaced every time.
+After every make or update, Kimi records what was just worked on in `recent-work.json`. `recent.mjs` lists the facts: what changed since the last map, uncommitted changes, and recent commits, each matched to its card. Kimi adds the *why*: what you asked for, and how each change serves it. The previous highlights are replaced every time.
 
 ## 6. Showing it
 
@@ -84,14 +84,12 @@ After every make or update, Claude records what was just worked on in `recent-wo
 It then:
 - carries descriptions over to moved and renamed files and endpoints;
 - drops entries for deleted files;
-- flags entries whose signature changed for Claude to review.
+- flags entries whose signature changed for Kimi to review.
 
-Then it rebuilds. Claude only has to describe what's new or flagged, and check the structure if the change was large. That's why updates are quick.
+Then it rebuilds. Kimi only has to describe what's new or flagged, and check the structure if the change was large. That's why updates are quick.
 
 ## Asking questions
 
-With the Claude Code CLI, the map's server runs `claude -p` in your project for each question. That session gets read-only tools only: reading and searching files, and `floorplan/query.mjs`, which looks things up in the map. It answers with text plus the cards to show, so answers can cite real code.
+With the Kimi Code CLI, the map's server runs `kimi -p --output-format stream-json` in your project for each question. A custom agent restricts the session to `Read`, `Grep` and `Glob`: no shell, file writes or delegation. The server supplies a compact map catalogue and a JSON schema, and Kimi answers with text plus the cards to show, citing real code when needed. Follow-ups resume the same Kimi session.
 
-In the Claude app, the map asks Claude through the app instead, with the same lookups but no access to your source.
-
-The same lookups help ordinary Claude Code sessions. The short section Floorplan adds to `CLAUDE.local.md` tells them to check the map (`query.mjs find`, `show`, `path`, `overview`) before searching the code from scratch.
+The standalone `floorplan/query.mjs` remains available for map lookups (`find`, `show`, `path`, `overview`) without modifying any project instruction files.
